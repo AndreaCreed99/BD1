@@ -1,0 +1,171 @@
+\documentclass[12pt,a4paper]{book}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+
+\title{Esercitazioni SQL}
+\author{Andrea Giacalone}
+\date{A.A 2022/23}
+
+
+
+\begin{document}
+\maketitle
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhf[EHC]{Esercitazioni SQL}
+\fancyhf[EFC]{\thepage}
+\fancyhf[OFC]{\thepage}
+\fancyhf[OHC]{Esercitazioni SQL}
+
+
+\chapter{Esercitazione 2}
+
+14) Trovare le informazioni sugli studenti e sugli esami che hanno sostenuto. Devono essere inclusi nel risultato anche gli studenti che non hanno sostenuto esami.
+
+
+Che tabelle mi servono? STUDENTE ed ESAME. 
+
+NB: Quando ci viene richiesto di trovare studenti, esami, professori, ... senza alcuna specifica ulteriore abbiamo due possibilità:
+    SELECT * FROM
+    estrarre la chiave primaria di quella tabella.
+
+Che tipo di JOIN devo fare?
+
+non è possbile join e basta perchè farebbe solo intersezione fra tabelle e non includerebbe gli studenti che non hanno sostenuto esami.
+
+Dunque dovrò fare LEFT JOIN su \emph{STUDENTE}.
+
+NB: a seconda dell'ordine che mettiamo nella clausola FROM, dovremo fare Left o Right Join.
+
+    Soluzione:
+        SELECT
+        FROM Studente LEFT JOIN Esame ON
+            Matricola = MatricolaStudente\\
+        NB: soluzione potrebbe essere ottimizzata perchè in questo modo ottengo
+            due campi Matricola
+
+        WHERE: non ho bisogno di imporre ulteriori condizioni
+
+\section{Il valore NULL}
+I valori nulli possono essere usati in 3 diverse situazioni:
+    1) il valore è applicabile ma sconosciuto -- valore ignoto al progettista
+    2) non posso applicare un valore -- es. data del parto effettuato da un maschio
+    3) non so se il valore è applicabile  -- es. valutazione di una serie di cui non si sa ancora eventuale data di uscita.
+
+Come trattiamo questo valore NULL?\\
+Lo utilizziamo quando vogliamo imporre una condizione di JOIN quindi se vogliamo estrarrre tutte le tuple di cui non sappiamo una valutazione:
+
+    attributo IS NULL errore: attributo = NULL
+
+NB: SQL ragiona con una logica a tre valori: TRUE (T), FALSE(F), UNKNOWN (U).
+copiare tabella riassuntiva da slides soluzioni...
+
+\subsubsection{Esercizio 15}: Calcolare il voto medio degli esami dei corsi da 5 crediti della facoltà 'ngegneria' tenuti da professori di nome 'Piero' la cui città di nome 'Piero' la cui ciità di residenza non è nota.
+
+Che tabelle mi servono? 
+ESAME, INSEGNANTE e CORSO
+
+SELECT AVG(Voto)
+FROM (Esame E JOIN Corso C on CodiceCorso = Codice) JOIN Insegnante I ON MatricolaProf = Matricola
+WHERE NumeroCrediti = 5 AND Facoltà = 'Ingegneria' AND Nome = 'Piero' AND Città IS NULL
+
+ATTENZIONE: C'è un errore in questa query: bisogna specificare la tabella da dove estraiamo l'attributo Nome poicheè lo troviamo sia in Insegnante che in Corso.
+
+SELECT AVG(Voto)
+FROM (Esame E JOIN Corso C on CodiceCorso = Codice) JOIN Insegnante I ON MatricolaProf = Matricola
+WHERE NumeroCrediti = 5 AND Facoltà = 'Ingegneria' AND I.Nome = 'Piero' AND Città IS NULL
+
+
+
+\section{Raggruppameto e Target List}
+Questa query presenta un errore:
+nella SELECT ha C.Città
+nella GROUP BY ha O.CodCli
+Abbiamo detto che se ho un \emph{raggruppamento}, nella SELECT possiamo solo mettere solo o aggregati o gli attributi che figurano nel raggruppamento; tuttavia a prima vista sembrerebe non esserci poichè per ogni cliente ho una sola città, ma SQL in ogni caso non può farlo.
+
+Come si risolve questo errore se io voglio mantenere la Città nella SELECT?
+Aggiungo nel GROUP BY anche C.Città: cambia qualcosa? In questo caso no, poichè vale il discorso fatto dell'unicità della città per ogni cliente.
+
+\subsection{Esercizio 16}: trovare matricola, cognome, nome degli studenti di Milano che hanno superato esami per almeno un totale di almeno 20 crediti.
+
+SOLUZIONE 1:
+SELECT 
+FROM Student S, Corso C, Esame E
+WHERE Matricola = MatricolaStudente AND CodiceCorso = Codice AND SUM(NumeroCrediti) >= 20 
+GROUP BY Matricola, Cognome, S.Nome
+
+Non va bene: faccio il Join fra Studente, Esame e Corso. Poi applico la WHERE, ma la WHERE lavora riga per riga (dunque SUM(NumeroCrediti = 12); non potrò mai avere nella WHERE aggregati.
+Gli aggregati nella SELECT o nella HAVING. Perchè una volta fatto il gruppo posso applicare la condizione.
+
+Dove metto Città = Milano? Ho due possibilità WHERE o HAVING.
+Sbagliato nella HAVING perchè nella HAVING non ho più singole righe ma gruppi, quindi la città di un gruppo per SQL è una cosa che non esiste. Quando io ho gruppi posso fitrare solo per aggregati.
+
+SOLUZIONE 2:
+SELECT Matricola, Cognome, S.Nome
+FROM Studente S, Corso C, Esame E
+WHERE Matricola = MatricolaStudente AND CodiceCrso = Codice AND Città = 'Milano'
+GROUP BY Matricola, Cognome, S.Nome
+HAVING SUM(NumeroCrediti) >= 20
+
+\section{Set Queries}
+Sono tre e sono: union, intersect,except.
+Si usano quando voglio aggregare i risultati di più query. Essendo operatori insiemistici, i risultati vengono eliminati, a meno che non venga specificata l'opzione \emph{all}. 
+NB: i risultati delle query da concatenare devono essere compatibili ossia:
+    stesso numero di colonne
+    a parità posizionale delle colonne, stesso dominio
+
+\subsubsection{Esercizio 17}: Trovare la matricola degli studenti che hanno preso almeno un 30 e almeno un 30 e lode, supponendo che il voto 30 e lode sia memorizzato come 33-
+
+
+SOLUZIONE 1: 
+SELECT *
+FROM Esame
+WHERE Voto = 30 AND Voto = 33
+
+E' sbagliata perchè vi è una contraddizione: no contemporanemente 30 e 33
+
+SOLUZIONE 2:
+SELECT MatricolaStudente
+FROM Esame
+WHERE Voto = 30 OR Voto = 33
+
+E' sbagliata perchè verrebbe incluso anche chi ha preso un 30 e poi resto tutti 18.
+
+Posso utilizzare allora gli operatori insiemistici.
+
+SELECT MatricolaStudenti
+FROM Esame
+WHERE Voto = 30
+INTERSECT
+SELECT MatricolaStudenti
+FROM Esame
+WHERE Voto = 33
+
+NB: se uno studente avesse preso più volte 30 e un 30L il risultato della mia query sarà lo studente ripetuto una sola volta perchè non tengo i duplicati.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
+
