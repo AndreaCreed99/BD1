@@ -146,6 +146,130 @@ WHERE Voto = 33
 
 NB: se uno studente avesse preso più volte 30 e un 30L il risultato della mia query sarà lo studente ripetuto una sola volta perchè non tengo i duplicati.
 
+NB: i risultati delle query sono compatibili poichè sto confrontando numero uguali di colonne e con attributi che corrispondentemenre alla posizione hanno stesso dominio (tipo).
+
+\subsubsection{Esercizio 18}
+Trovare i cognomi dei professori che non sono anche cognomi di studenti di Milano.\\
+\\
+SOLUZIONE:\\
+\\
+SELECT Cognome\\
+FROM Insegnante\\
+EXCEPT\\
+SELECT Cognome\\
+FROM Studenti\\
+WHERE Città = 'Milano'\\
+
+\section{Sub-Query}
+Nella clausole WHERE e HAVING possono comparire predicati che confrontano un attributo (o un'espressione di attributi) con il risultato di una intera query SQL: dunque non più confronto con singola stringa, ..., ma con intero risultato.\\
+
+Operator: uno dei vari operatori (NB: il simbolo di disuguaglianza è <>)
+ANY: si mette quando il predicato è vero se almeno una riga restituita dalla query QuerySQL soddisfa il confronto 
+ALL: il predicato è vero se tutte le righe resistuite dalla query QuerySQL soddisfano il confronto.
+
+\subsection{Compatibilità delle query}
+L'attributo della query più esterna deve essere compatibile con l'attributo della query più interna (numero uguale e dominio uguale).
+
+\subsection{Visibilità degli alias}
+NB: Gli alias sono sia quelli che si creano con AS e anche la visibilità dei campi: i campi delle query esterne li posso utilizzare anche nelle query interne: dunque posso fae sia binding fra query esterna e interna ma posso anche introdurre ambiguità, perchè non so poi a quale tabella appartengono.\\
+Si risolve creando alias.
+
+\subsubsection{Esercizio 19}
+Trovare i codici e i nomi dei corsi con il massimo numero di crediti.\\
+\\
+SOLUZIONE 1:\\
+\\
+SELECT Codice,Nome\\
+FROM Corso\\
+WHERE MAX(NumeroCrediti)\\
+NB:sbagliato così come mettere WHERE NumeroCrediti = MAX(NumeroCrediti) sempre perchè la WHERE viene valutata riga per riga.\\
+\\
+SOLUZIONE 2:\\
+\\
+SELECT Codice, Nome\\
+FROM Corso\\
+WHERE NumeroCrediti = (SELECT MAX(C.NumeroCrediti FROM Corso C))
+
+NB: poichè la WHERE viene valutata riga per riga, la subquery verrà eseguita più volte, dunque poco performante
+NB: se ho più corsi con il max numero di crediti, funziona perchè li terrò tutti che soddisfano.
+
+SOLUZIONE 3:\\
+SELECT Codice, Nome\\
+FROM Corso\\
+WHERE NumeroCrediti >= ALL (SELECT C.Numero Crediti FROM Corso C)
+NB: questa volta sto estraendo tutti i numero crediti dei corsi e chiedo che sia maggiore uguale(attenzione a porre l'uguale perchè il max è compreso in questo numero altrimenti restituirebbe l'insieme vuoto)
+
+\subsubsection{Esercizio 20}
+Troavre i codici e i nomi di tutti i corsi ad eccezione di quelli con il minor numero di crediti.\\
+\\
+\textbf{SOLUZIONE 1}:\\
+\\
+SELECT Codice, Nome\\
+FROM Corso\\
+WHERE NumeroCrediti <> (SELECT MIN(C.NumeroCrediti) FROM Corso C)\\
+\\
+\textbf{SOLUZIONE 2}:\\
+\\
+SELECT Codice,Nome\\
+FROM Corso\\
+WHERE NumeroCrediti > ANY(SELECT C.NumeroCrediti FROM Corso C)\\
+\\
+\textbf{SOLUZIONE 3}:\\
+\\
+SELECT Codice, Nome\\
+FROM Corso\\ 
+EXCEPT\\
+SELECT Codice, Nome\\
+FROM Corso\\
+WHERE NumeroCrediti = (SELECT MIN(C.NumeroCrediti) FROM Corso C)\\
+
+\section{Operatori IN e NOT IN}
+L'operatore IN è equivalente a = ANY.
+L'operatore NOT IN è equivalente a <> ALL.
+
+\subsubsection{Esercizio 21}
+Trovare matricola nome  ecognome degli studeneti che hanno preso almeno un voto maggiore di 20 in esami con nome del corso che inizia con 'AN' e la cui quarta lettera è 'L'.\\
+\\
+SOLUZIONE 1:\\
+\\
+SELECT Matricola, Nome, Cognome\\
+FROM Studente\\
+WHERE Matricola IN (SELECT MatricolaStudente FROM Esame, Corso C WHERE CodiceCorso = Corso AND Voto> 20 AND C.Nome LIKE "AN_L%")
+
+NB: la cui matricola è tra... -- WHERE Matricola IN\\
+\\
+SOLUZIONE 2:\\
+\\
+SELECT Matricola, Nome, Cognome, S.Nome
+FROM Studente S, Esame, Corso C
+WHERE CodiceCorso = Codidce AND Matricola = MatricolaStudente AND Voto > 20 AND C.Nome LIKE "AN_L%")
+
+NB: in questa soluzione però otteniamo duplicati; per farla in maniera identica alla prima senza però utilizzare subquery dobbiamo:
+
+SOLUZIONE 3:\\
+\\
+SELECT DISTINCT Matricola, Nome, Cognome, S.Nome
+FROM Studente S, Esame, Corso C
+WHERE CodiceCorso = Codidce AND Matricola = MatricolaStudente AND Voto > 20 AND C.Nome LIKE "AN_L%")
+
+Con parola chiave DISTINCT eliminiamo i duplicati 
+
+\section{Operatore EXISTS}
+Questo operatore, che di fatto mi permette di andare a predicare e per questo andrà nella clausola WHERE o HAVING, mi restituirà vero se QuerySQL retsituisce almeno una riga non vuota.
+
+NB: è possibile usare anche la sintassi NOT EXISTS
+
+\subsubsection{Esercizio 22}
+Trovare le informazioni di tutti i professori che hanno degli omonimi
+
+SOLUZIONE 1:\\
+\\
+SELECT *\\
+FROM Insegnante I1\\
+WHERE EXISTS(SELECT * FROM Insegnate I2 HWERE I1.Nome = I2.Nome AND I1.Cognome = I2.Cognome AND I1.Matricola <> I2.Matricola)
+
+
+
 
 
 
