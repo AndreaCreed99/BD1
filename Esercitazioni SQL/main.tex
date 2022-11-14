@@ -268,6 +268,62 @@ SELECT *\\
 FROM Insegnante I1\\
 WHERE EXISTS(SELECT * FROM Insegnate I2 HWERE I1.Nome = I2.Nome AND I1.Cognome = I2.Cognome AND I1.Matricola <> I2.Matricola)
 
+\section{Costruttore di Tupla}
+Semplicemente quando io voglio le subquery IN con più di 1 colonna devo mettere le parentesi tonde: queste parentesi tonde si chiamano \textbf{costruttore di tupla}
+
+\subsubsection{Esercizio 23}
+Trovare la matricola, il nome e il cognome degli studenti che hanno superato gli esami di tutti i corsi.\\
+\\
+SOLUZIONE 1:\\
+\\
+SELECT Matricola, Nome, Cognome\\
+FROM Esame, Studente\\
+WHERE MatricolaStudente = Matricola
+GROUP BY Matricola, Nome, Cognome
+HAVING COUNT(*) = (SELECT COUNT(*) FROM Corso)\\
+\\
+SOLUZIONE 2:\\
+\\
+SELECT Matricola,Cognome,Nome
+FROM Studente
+WHERE NOT EXISTS(
+    SELECT * FROM Corso C
+    WHERE S.MATRICOLA NOT IN(
+        SELECT E.MatricolaStudente
+        FROM Esame E
+        WHERE E.CodiceCorso = C.CodiceCorso)
+    )
+)
+
+Prendo gli studenti tale per cui non esiste un corso che quello studente (che sto decideno se inserire o meno) è tra gli studenti che non hanno superato l'esame di quel corso\\
+\\
+SOLUZIONE 3:\\
+\\
+SELECT Matricola, Cognome, Nome
+FROM Studente S
+WHERE NOT EXISTS (
+    SELECT CodiceCorso
+    FROM Corso
+    EXCEPT
+    SELECT CodiceCorso
+    FROM Esame
+    WHERE MatricolaStudente = S.Matricola)
+
+\subsubsection{Esercizio 24}
+Trovare le matricole degli studenti che hanno più 30L che 30.\\
+\\
+SELECT MatricolaStudente
+FROM Esame E1
+WHERE Voto = 33
+GROUP BY MatricolaStudente
+HAVING COUNT(*) >(
+    %fino a qui ho contato il numero di 30L presi studente per studente
+    SELECT COUNT(*)
+    FROM Esame E
+    WHERE E.Voto = 30
+    AND E.MatricolaStudente = E1.MatricolaStudente)
+    
+
 
 
 
