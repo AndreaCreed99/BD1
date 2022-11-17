@@ -1,10 +1,11 @@
-\documentclass[12pt,a4paper]{book}
+\documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{geometry}
 \usepackage{fancyhdr}
 \usepackage{graphicx}
+\usepackage{tabto}
 
-\title{Esercitazioni SQL}
+\title{SQL - Esercitazione 2}
 \author{Andrea Giacalone}
 \date{A.A 2022/23}
 
@@ -13,28 +14,24 @@
 \begin{document}
 \maketitle
 
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhf[EHC]{Esercitazioni SQL}
-\fancyhf[EFC]{\thepage}
-\fancyhf[OFC]{\thepage}
-\fancyhf[OHC]{Esercitazioni SQL}
+\section{JOIN - recap}
+\subsubsection{Esercizio 14}
+Trovare le informazioni sugli studenti e sugli esami che hanno sostenuto. Devono essere inclusi nel risultato anche gli studenti che non hanno sostenuto esami.\\
+\\
 
+Che tabelle mi servono? STUDENTE ed ESAME.\\
+\\
 
-\chapter{Esercitazione 2}
+NB: Quando ci viene richiesto di trovare studenti, esami, professori, ... senza alcuna specifica ulteriore abbiamo due possibilità:\\
+    \begin{itemize}
+        \item\textbf{SELECT} *\\
+        \textbf{FROM}
+        \item Estrarre la \emph{chiave primaria} di quella tabella.\\
+    \end{itemize}
 
-14) Trovare le informazioni sugli studenti e sugli esami che hanno sostenuto. Devono essere inclusi nel risultato anche gli studenti che non hanno sostenuto esami.
+Che tipo di JOIN devo fare?\\
 
-
-Che tabelle mi servono? STUDENTE ed ESAME. 
-
-NB: Quando ci viene richiesto di trovare studenti, esami, professori, ... senza alcuna specifica ulteriore abbiamo due possibilità:
-    SELECT * FROM
-    estrarre la chiave primaria di quella tabella.
-
-Che tipo di JOIN devo fare?
-
-non è possbile join e basta perchè farebbe solo intersezione fra tabelle e non includerebbe gli studenti che non hanno sostenuto esami.
+Non basta fare un semplice JOIN perchè farebbe solo intersezione fra tabelle e non includerebbe gli studenti che non hanno sostenuto esami.
 
 Dunque dovrò fare LEFT JOIN su \emph{STUDENTE}.
 
@@ -312,15 +309,15 @@ WHERE NOT EXISTS (
 \subsubsection{Esercizio 24}
 Trovare le matricole degli studenti che hanno più 30L che 30.\\
 \\
-SELECT MatricolaStudente
-FROM Esame E1
-WHERE Voto = 33
-GROUP BY MatricolaStudente
-HAVING COUNT(*) >(
+SELECT MatricolaStudente\\
+FROM Esame E1\\
+WHERE Voto = 33\\
+GROUP BY MatricolaStudente\\
+HAVING COUNT(*) >(\\
     %fino a qui ho contato il numero di 30L presi studente per studente
     SELECT COUNT(*)
     FROM Esame E
-    WHERE E.Voto = 30
+    WHERE E.Voto = 30\\
     AND E.MatricolaStudente = E1.MatricolaStudente)
     
 
